@@ -1,2 +1,4 @@
+/main.c
 .vscode
-disk/
+*.exe
+*.img
