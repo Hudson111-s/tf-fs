@@ -27,7 +27,7 @@ int mount_fs(FILE *disk, fs_t *fs) {
 
 int init_superblock(FILE *disk) {
     uint32_t free_blocks = TOTAL_BLOCKS - INODE_BLOCKS - BITMAP_BLOCKS - 1;
-    superblock_t sb = (superblock_t){TF_FS_MAGIC, TOTAL_BLOCKS, free_blocks, INODE_BLOCK_START_BLOCK, DATA_BLOCK_START_BLOCK};
+    superblock_t sb = (superblock_t){TF_FS_MAGIC, TOTAL_BLOCKS, free_blocks, INODE_BLOCK_START_BLOCK, BITMAP_BLOCK_START_BLOCK, DATA_BLOCK_START_BLOCK};
 
     fseek(disk, SUPERBLOCK_START, SEEK_SET);
     return fwrite(&sb, sizeof(superblock_t), 1, disk) == 1;
