@@ -1,10 +1,10 @@
 #include <stdio.h>
 #include <string.h>
-#include "../include/superblock.h"
-#include "../include/bitmap.h"
-#include "../include/inode.h"
-#include "../include/block.h"
-#include "../include/utils.h"
+#include "superblock.h"
+#include "bitmap.h"
+#include "inode.h"
+#include "block.h"
+#include "utils.h"
 
 inode_t *create_file(inode_t table[], const char *name) {
     return create_inode(table, name);

@@ -1,6 +1,6 @@
 #include <string.h>
-#include "../include/inode.h"
-#include "../include/block.h"
+#include "inode.h"
+#include "block.h"
 
 inode_t *find_inode(inode_t table[], const char *name) {
     for (int i = 0; i < MAX_FILES; i++) {

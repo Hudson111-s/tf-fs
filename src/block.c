@@ -1,9 +1,9 @@
 #include <stdio.h>
 #include <stdint.h>
-#include "../include/block.h"
-#include "../include/superblock.h"
-#include "../include/bitmap.h"
-#include "../include/inode.h"
+#include "block.h"
+#include "superblock.h"
+#include "bitmap.h"
+#include "inode.h"
 
 FILE *open_disk(const char *path) {
     return fopen(path, "r+b");

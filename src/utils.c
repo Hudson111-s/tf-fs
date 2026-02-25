@@ -1,9 +1,9 @@
 #include <stdio.h>
 #include <stdint.h>
-#include "../include/utils.h"
-#include "../include/superblock.h"
-#include "../include/block.h"
-#include "../include/bitmap.h"
+#include "utils.h"
+#include "superblock.h"
+#include "block.h"
+#include "bitmap.h"
 
 int init_fs(FILE* disk) {
     if (!init_superblock(disk)) return -1;
