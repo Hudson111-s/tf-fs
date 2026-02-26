@@ -3,14 +3,10 @@
 #include <stdint.h>
 
 #define MAX_BLOCKS_PER_FILE 16
-#define MAX_FILE_NAME 32
+#define MAX_FILE_NAME 128
 
 typedef struct inode_t {
     uint32_t blocks[MAX_BLOCKS_PER_FILE];
-    /* 
-        "name" should be moved into dir struct,
-        should be ok for single level file system.
-    */
     char name[MAX_FILE_NAME];
     uint32_t size;
     uint8_t used;
