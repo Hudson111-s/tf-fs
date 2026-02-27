@@ -2,11 +2,7 @@
 #include "superblock.h"
 #include "bitmap.h"
 #include "inode.h"
-typedef struct fs_t{
-    superblock_t sb;
-    uint8_t bitmap[BITMAP_SIZE];
-    inode_t table[MAX_FILES];
-} fs_t;
+#include "tf-fs.h"
 
 /* Init functions. */
 int init_fs(FILE *disk);
@@ -21,4 +17,4 @@ int read_inode(FILE *disk, inode_t table[]);
 
 /* Other. */
 int mount_fs(FILE *disk, fs_t *fs);
-int sync_fs(FILE *disk, superblock_t *sb, uint8_t bitmap[], inode_t table[]);
+int sync_fs(fs_t *fs);

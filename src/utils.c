@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <stdint.h>
+#include "tf-fs.h"
 #include "utils.h"
 #include "superblock.h"
 #include "block.h"
@@ -21,6 +22,7 @@ int mount_fs(FILE *disk, fs_t *fs) {
     if (!read_superblock(disk, &(fs->sb))) return -1;
     if (!read_bitmap(disk, fs->bitmap)) return -1;
     if (!read_inode(disk, fs->table)) return -1;
+    fs->disk = disk;
 
     return 0;
 }
@@ -69,14 +71,14 @@ int read_inode(FILE *disk, inode_t table[]) {
     return fread(table, sizeof(inode_t), MAX_FILES, disk) == MAX_FILES;
 }
 
-int sync_fs(FILE *disk, superblock_t *sb, uint8_t bitmap[], inode_t table[]) {
-    fseek(disk, SUPERBLOCK_START, SEEK_SET);
-    if (fwrite(sb, sizeof(superblock_t), 1, disk) != 1) return -1;
-    fseek(disk, BITMAP_BLOCK_START, SEEK_SET);
-    if (fwrite(bitmap, BITMAP_SIZE, 1, disk) != 1) return -1;
-    fseek(disk, INODE_BLOCK_START, SEEK_SET);
-    if (fwrite(table, sizeof(inode_t), MAX_FILES, disk) != MAX_FILES) return -1;
-
-    fflush(disk);
+int sync_fs(fs_t *fs) {
+    fseek(fs->disk, SUPERBLOCK_START, SEEK_SET);
+    if (fwrite(&fs->sb, sizeof(superblock_t), 1, fs->disk) != 1) return -1;
+    fseek(fs->disk, BITMAP_BLOCK_START, SEEK_SET);
+    if (fwrite(fs->bitmap, BITMAP_SIZE, 1, fs->disk) != 1) return -1;
+    fseek(fs->disk, INODE_BLOCK_START, SEEK_SET);
+    if (fwrite(fs->table, sizeof(inode_t), MAX_FILES, fs->disk) != MAX_FILES) return -1;
+    
+    fflush(fs->disk);
     return 0;
 }

@@ -6,16 +6,18 @@
 #include "bitmap.h"
 #include "inode.h"
 
-inode_t *create_file(inode_t table[], const char *name);
+typedef struct fs_t{
+    FILE *disk;
+    superblock_t sb;
+    uint8_t bitmap[BITMAP_SIZE];
+    inode_t table[MAX_FILES];
+} fs_t;
 
-/* 
-    This inits file that were created with init data. 
-    Should not be used to append to a file.
-*/
-int write_file(FILE *disk, superblock_t *sb, int8_t bitmap[], inode_t table[], inode_t *inode, uint8_t data[], size_t size);
+/* Creates and saves file. Does not allocate block(s). */
+inode_t *create_file(fs_t *fs, const char *name);
+
+/* Appends data buffer to file. Will allocate block(s) if needed. */
+int write_file(fs_t *fs, inode_t *inode, uint8_t data[], size_t size);
 
 /* Reads file into out buffer. */
-int read_file(FILE *disk, inode_t *inode, uint8_t out[]);
-
-/* Reads file by file name into out buffer. */
-int read_file_bname(FILE *disk, inode_t table[], uint8_t out[], const char *name);
+int read_file(fs_t *fs, inode_t *inode, uint8_t out[], size_t size);
