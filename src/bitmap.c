@@ -14,6 +14,6 @@ int alloc_block(uint8_t bitmap[], superblock_t *sb) {
 }
 
 void free_block(uint8_t bitmap[], superblock_t *sb, int block) {
-    bitmap[block/8] &= (1u << (block%8));
+    bitmap[block/8] &= ~(1u << (block%8));
     sb->free_blocks++;
 }
