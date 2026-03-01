@@ -21,3 +21,6 @@ int write_file(fs_t *fs, inode_t *inode, uint8_t data[], size_t size);
 
 /* Reads file into out buffer. */
 int read_file(fs_t *fs, inode_t *inode, uint8_t out[], size_t size);
+
+/* Deletes file by freeing inode, bitmap, and blocks. */
+int delete_file(fs_t *fs, inode_t *inode);

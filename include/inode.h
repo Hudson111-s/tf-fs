@@ -17,3 +17,6 @@ inode_t *find_inode(inode_t table[], const char *name);
 
 /* Creates and returns pointer to inode in inode table. */
 inode_t *create_inode(inode_t table[], const char *name);
+
+/* Frees inode so it can be used again. */
+int free_inode(inode_t table[], const char *name);
