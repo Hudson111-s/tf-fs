@@ -6,10 +6,12 @@
 #include "superblock.h"
 
 #define BLOCK_SIZE 4096
-#define TOTAL_BLOCKS (DISK_MB * 256) // 256 is the ratio of 4KB blocks to MB
+#define TOTAL_BLOCKS ((DISK_MB * 1024 * 1024) / BLOCK_SIZE)
 
-#define BITMAP_BLOCKS 1 // Total blocks taken
-#define INODE_BLOCKS 8 // Total blocks taken
+#define BITMAP_BITS_PER_BLOCK (BLOCK_SIZE * 8)
+#define BITMAP_BLOCKS ((TOTAL_BLOCKS + BITMAP_BITS_PER_BLOCK - 1) / BITMAP_BITS_PER_BLOCK)
+
+#define INODE_BLOCKS (TOTAL_BLOCKS / 50)  // 2% for inodes
 
 /* In bytes. */
 #define SUPERBLOCK_START 0 
