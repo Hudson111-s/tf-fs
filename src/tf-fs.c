@@ -8,6 +8,8 @@
 #include "utils.h"
 
 inode_t *create_file(fs_t *fs, const char *name) {
+    if (find_inode(fs->table, name) != NULL) return NULL;
+
     inode_t *inode = create_inode(fs->table, name);
     sync_fs(fs);
     return inode;
