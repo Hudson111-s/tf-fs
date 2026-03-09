@@ -10,6 +10,8 @@ int init_fs(FILE* disk) {
     if (!init_superblock(disk)) return -1;
     if (!init_bitmap(disk)) return -1;
     if (!init_inode(disk)) return -1;
+
+    fflush(disk);
     return 0;
 }
 
@@ -23,7 +25,7 @@ int mount_fs(FILE *disk, fs_t *fs) {
     if (!read_bitmap(disk, fs->bitmap)) return -1;
     if (!read_inode(disk, fs->table)) return -1;
     fs->disk = disk;
-
+    
     return 0;
 }
 
@@ -38,7 +40,7 @@ int init_superblock(FILE *disk) {
 int init_bitmap(FILE *disk) {
     uint8_t bitmap[BITMAP_SIZE] = {0};
 
-    bitmap[0] = 1u; // sb
+    bitmap[0] |= 1u; // sb
     for (int i = BITMAP_BLOCK_START_BLOCK; i < BITMAP_BLOCK_START_BLOCK + BITMAP_BLOCKS; i++)
         bitmap[i/8] |= (1u << (i%8)); // bitmap
     for (int i = INODE_BLOCK_START_BLOCK; i < INODE_BLOCK_START_BLOCK + INODE_BLOCKS; i++)

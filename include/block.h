@@ -37,7 +37,7 @@ int read_block(FILE *disk, int block_num, uint8_t *buffer);
 int write_block(FILE *disk, int block_num, uint8_t *buffer);
 
 /* Reads bytes from block, up to one block */
-int read_bytes(FILE *disk, int block_num, size_t size, uint8_t *buffer);
+int read_bytes(FILE *disk, int block_num, uint8_t *buffer, size_t size, size_t offset);
 
 /* Write bytes to block, up to one block */
-int write_bytes(FILE *disk, int block_num, size_t size, uint8_t *buffer);
+int write_bytes(FILE *disk, int block_num, uint8_t *buffer, size_t size, size_t offset);
