@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <string.h>
+
 #include "tf-fs.h"
 #include "superblock.h"
 #include "bitmap.h"
@@ -21,7 +22,6 @@ int write_file(fs_t *fs, inode_t *inode, uint8_t data[], size_t size, size_t off
 
     size_t remaining = size;
     size_t written = 0;
-    uint8_t *src = data;
 
     while (remaining > 0) {
         if (block_index >= MAX_BLOCKS_PER_FILE) return -3;
@@ -44,7 +44,7 @@ int write_file(fs_t *fs, inode_t *inode, uint8_t data[], size_t size, size_t off
         size_t space = BLOCK_SIZE - block_offset;
         size_t to_write = remaining < space ? remaining : space;
 
-        memcpy(buffer + block_offset, src + written, to_write);
+        memcpy(buffer + block_offset, data + written, to_write);
         write_block(fs->disk, block, buffer);
 
         written += to_write;
