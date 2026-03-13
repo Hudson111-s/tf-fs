@@ -24,13 +24,13 @@ int write_file(fs_t *fs, inode_t *inode, uint8_t data[], size_t size, size_t off
     size_t written = 0;
 
     while (remaining > 0) {
-        if (block_index >= MAX_BLOCKS_PER_FILE) return -3;
+        if (block_index >= MAX_BLOCKS_PER_FILE) return 0;
         
         int block = inode->blocks[block_index];
         int new_block = 0;
         if (block == 0) {
             block = alloc_block(fs->bitmap, &fs->sb);
-            if (block == -1) return -2;
+            if (block == -1) return 0;
 
             inode->blocks[block_index] = block;
             new_block = 1;
@@ -44,7 +44,12 @@ int write_file(fs_t *fs, inode_t *inode, uint8_t data[], size_t size, size_t off
         size_t space = BLOCK_SIZE - block_offset;
         size_t to_write = remaining < space ? remaining : space;
 
-        memcpy(buffer + block_offset, data + written, to_write);
+        if (data != NULL) {
+            memcpy(buffer + block_offset, data + written, to_write);
+        } else {
+            memcpy(buffer + block_offset, 0, to_write);
+        }
+        
         write_block(fs->disk, block, buffer);
 
         written += to_write;
@@ -55,8 +60,8 @@ int write_file(fs_t *fs, inode_t *inode, uint8_t data[], size_t size, size_t off
     }
     size_t new_end = offset + written;
     if (new_end > inode->size) inode->size = new_end;
-
-    return sync_fs(fs);
+    
+    return (int)written;
 }
 
 int read_file(fs_t *fs, inode_t *inode, uint8_t out[], size_t size, size_t offset) {
@@ -93,10 +98,36 @@ int delete_file(fs_t *fs, inode_t *inode) {
         if (inode->blocks[i] == 0) continue;
         
         uint8_t buffer[BLOCK_SIZE] = {0};
-        if (write_block(fs->disk, inode->blocks[i], buffer) == -1) return -1;
+        if (write_block(fs->disk, inode->blocks[i], buffer) == -1) return 1;
         free_block(fs->bitmap, &fs->sb, inode->blocks[i]);
     }
-    if (free_inode(fs->table, inode->name) == -1) return -1;
+    if (free_inode(fs->table, inode->name) == -1) return 1;
 
     return sync_fs(fs);
+}
+
+int truncate_file(fs_t *fs, inode_t *inode, size_t size) {
+    size_t old_size = inode->size;
+
+    // File gets smaller.
+    if (size < old_size) {
+        int old_blocks = (old_size + BLOCK_SIZE - 1) / BLOCK_SIZE;
+        int new_blocks = (size + BLOCK_SIZE - 1) / BLOCK_SIZE;
+
+        for (int i = new_blocks; i < old_blocks; i++) {
+            if (inode->blocks[i]) {
+                free_block(fs->bitmap, &fs->sb, inode->blocks[i]);
+                inode->blocks[i] = 0;
+            }
+        }
+        inode->size = size;
+    }
+
+    // File gets bigger.
+    if (size > old_size) {
+        write_file(fs, inode, NULL, size - old_size, old_size);
+    }
+
+    sync_fs(fs);
+    return 0;
 }
