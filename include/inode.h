@@ -10,6 +10,8 @@ typedef struct inode_t {
     char name[MAX_FILE_NAME];
     uint32_t size;
     uint8_t used;
+    int64_t mtime;
+    int64_t atime;
 } inode_t;
 
 /* Finds and returns pointer to inode in inode table based off name. */
