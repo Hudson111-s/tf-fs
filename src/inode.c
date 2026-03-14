@@ -16,7 +16,7 @@ inode_t *create_inode(inode_t table[], const char *name) {
     for (int i = 0; i < MAX_FILES; i++) {
         if (!table[i].used) {
             memset(&table[i], 0, sizeof(inode_t));
-            strcpy(table[i].name, name);
+            strncpy(table[i].name, name, MAX_FILE_NAME);
             table[i].used = 1;
             return &table[i];
         }

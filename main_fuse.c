@@ -96,6 +96,15 @@ static int fs_create(const char *path, fuse_mode_t mode, struct fuse_file_info *
     return 0;
 }
 
+static int fs_rename(const char *from, const char *to) {
+    inode_t *inode = find_inode(fs.table, from + 1);
+    if (!inode) return -ENOENT;
+
+    strncpy(inode->name, to + 1, MAX_FILE_NAME);
+    sync_fs(&fs);
+    return 0;
+}
+
 static int fs_read(
     const char *path,
     char *buf,
@@ -122,7 +131,7 @@ static int fs_write(
 
     inode_t *inode = find_inode(fs.table, path + 1);
     if (!inode) return -ENOENT;
-
+    
     int written = write_file(&fs, inode, (uint8_t *)buf, size, offset);
     return written == -1 ? -EFBIG : written;
 }
@@ -173,7 +182,15 @@ static int fs_statfs(const char *path, struct fuse_statvfs *st) {
         if (!fs.table[i].used) inodes_free++;
     }
     st->f_ffree = inodes_free; 
-    
+
+    return 0;
+}
+
+int fs_flush(const char *path, struct fuse_file_info *fi) {
+    (void)path;
+    (void)fi;
+
+    sync_fs(&fs);
     return 0;
 }
 
@@ -187,7 +204,9 @@ static struct fuse_operations ops = {
     .unlink   = fs_unlink,
     .utimens  = fs_utimens,
     .truncate = fs_truncate,
-    .statfs   = fs_statfs
+    .statfs   = fs_statfs,
+    .rename   = fs_rename,
+    .flush    = fs_flush
 };
 
 int main(int argc, char *argv[])
