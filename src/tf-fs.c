@@ -24,13 +24,16 @@ int write_file(fs_t *fs, inode_t *inode, uint8_t data[], size_t size, size_t off
     size_t written = 0;
 
     while (remaining > 0) {
-        if (block_index >= MAX_BLOCKS_PER_FILE) return 0;
+        if (block_index >= MAX_BLOCKS_PER_FILE) {
+            if (written > 0) break;
+            return -1;
+        }
         
         int block = inode->blocks[block_index];
         int new_block = 0;
         if (block == 0) {
             block = alloc_block(fs->bitmap, &fs->sb);
-            if (block == -1) return 0;
+            if (block == -1) break;
 
             inode->blocks[block_index] = block;
             new_block = 1;

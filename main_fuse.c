@@ -123,7 +123,8 @@ static int fs_write(
     inode_t *inode = find_inode(fs.table, path + 1);
     if (!inode) return -ENOENT;
 
-    return write_file(&fs, inode, (uint8_t *)buf, size, offset);
+    int written = write_file(&fs, inode, (uint8_t *)buf, size, offset);
+    return written == -1 ? -EFBIG : written;
 }
 
 static int fs_open(const char *path, struct fuse_file_info *fi) {
