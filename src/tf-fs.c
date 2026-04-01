@@ -99,13 +99,10 @@ int delete_file(fs_t *fs, inode_t *inode) {
     int total_blocks = (inode->size + BLOCK_SIZE - 1) / BLOCK_SIZE;
     for (int i = 0; i < total_blocks; i++) {
         if (inode->blocks[i] == 0) continue;
-        
-        uint8_t buffer[BLOCK_SIZE] = {0};
-        if (write_block(fs->disk, inode->blocks[i], buffer) == -1) return 1;
         free_block(fs->bitmap, &fs->sb, inode->blocks[i]);
     }
-    if (free_inode(fs->table, inode->name) == -1) return 1;
-
+    free_inode(inode);
+    
     return sync_fs(fs);
 }
 

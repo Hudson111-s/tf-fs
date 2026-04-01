@@ -36,9 +36,11 @@ static int fs_getattr(const char *path, struct fuse_stat *st) {
     st->st_atim.tv_nsec = 0;
     st->st_mtim.tv_sec = inode->mtime;
     st->st_mtim.tv_nsec = 0;
-    st->st_ctim.tv_sec = inode->mtime;
+    st->st_ctim.tv_sec = inode->ctime;
     st->st_ctim.tv_nsec = 0;
-
+    st->st_birthtim.tv_sec = inode->birthtim;
+    st->st_birthtim.tv_nsec = 0;
+    
     st->st_mode = S_IFREG | 0666;
     st->st_nlink = 1;
     st->st_size = inode->size;
@@ -72,7 +74,15 @@ static int fs_truncate(const char *path, fuse_off_t size) {
     inode_t *inode = find_inode(fs.table, path + 1);
     if (!inode) return -ENOENT;
 
-    return truncate_file(&fs, inode, size);
+    int rc = truncate_file(&fs, inode, size);
+    if (rc == 0) {
+        time_t now = time(NULL);
+        inode->mtime = now;
+        inode->ctime = now;
+    }
+
+    sync_fs(&fs);
+    return rc;
 }
 
 static int fs_create(const char *path, fuse_mode_t mode, struct fuse_file_info *fi) {
@@ -91,6 +101,8 @@ static int fs_create(const char *path, fuse_mode_t mode, struct fuse_file_info *
     time_t now = time(NULL);
     inode->atime = (int64_t)now;
     inode->mtime = (int64_t)now;
+    inode->ctime = (int64_t)now;
+    inode->birthtim = (int64_t)now;
 
     sync_fs(&fs);
     return 0;
@@ -101,6 +113,9 @@ static int fs_rename(const char *from, const char *to) {
     if (!inode) return -ENOENT;
 
     strncpy(inode->name, to + 1, MAX_FILE_NAME);
+    time_t now = time(NULL);
+    inode->ctime = now;
+
     sync_fs(&fs);
     return 0;
 }
@@ -133,6 +148,13 @@ static int fs_write(
     if (!inode) return -ENOENT;
     
     int written = write_file(&fs, inode, (uint8_t *)buf, size, offset);
+    if (written > 0) {
+        time_t now = time(NULL);
+        inode->mtime = now;
+        inode->ctime = now;
+        sync_fs(&fs);
+    }
+
     return written == -1 ? -EFBIG : written;
 }
 
@@ -141,20 +163,22 @@ static int fs_open(const char *path, struct fuse_file_info *fi) {
 
     inode_t *inode = find_inode(fs.table, path + 1);
     if (!inode) return -ENOENT;
+    
+    time_t now = time(NULL);
+    inode->atime = now;
 
+    sync_fs(&fs);
     return 0; 
 }
 
-static int fs_unlink(const char *path)
-{
+static int fs_unlink(const char *path) {
     inode_t *inode = find_inode(fs.table, path + 1);
     if (!inode) return -ENOENT;
 
-    return delete_file(&fs, inode);
+    return delete_file(&fs, inode) ? -EOF : 0;
 }
 
-static int fs_utimens(const char *path, const struct fuse_timespec tv[2])
-{
+static int fs_utimens(const char *path, const struct fuse_timespec tv[2]) {
     inode_t *inode = find_inode(fs.table, path + 1);
     if (!inode) return -ENOENT;
 
@@ -209,8 +233,7 @@ static struct fuse_operations ops = {
     .flush    = fs_flush
 };
 
-int main(int argc, char *argv[])
-{
+int main(int argc, char *argv[]) {
     if (argc < 3) {
         printf("usage: %s <disk.img> <mountpoint>\n", argv[0]);
         return 1;
@@ -227,5 +250,13 @@ int main(int argc, char *argv[])
         return 1;
     }
 
-    return fuse_main(argc - 1, argv + 1, &ops, NULL);
+    char *args[argc + 2]; 
+    int i;
+    for (i = 0; i < argc - 1; i++) {
+        args[i] = argv[i + 1]; // Shift to remove disk.img from FUSE args
+    }
+    args[i++] = "-o";
+    args[i++] = "FileSystemName=TF-FS";
+    
+    return fuse_main(i, args, &ops, NULL);
 }
