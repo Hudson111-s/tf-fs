@@ -50,7 +50,7 @@ int write_file(fs_t *fs, inode_t *inode, uint8_t data[], size_t size, size_t off
         if (data != NULL) {
             memcpy(buffer + block_offset, data + written, to_write);
         } else {
-            memcpy(buffer + block_offset, 0, to_write);
+            memset(buffer + block_offset, 0, to_write);
         }
         
         write_block(fs->disk, block, buffer);
