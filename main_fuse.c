@@ -92,8 +92,22 @@ static int fs_create(const char *path, fuse_mode_t mode, struct fuse_file_info *
     const char *name = path + 1;
     inode_t *inode = find_inode(fs.table, name);
 
-    // If file already exists, truncate.
-    if (inode) return truncate_file(&fs, inode, 0);
+    // Handle file already exists.
+    if (inode) {
+        if (fi && (fi->flags & O_TRUNC)) {
+            int ret = truncate_file(&fs, inode, 0);
+            if (ret != 0) {
+                return ret; 
+            }
+        }
+
+        time_t now = time(NULL);
+        inode->atime = (int64_t)now;
+        inode->mtime = (int64_t)now;
+        
+        sync_fs(&fs);
+        return 0;
+    }
 
     inode = create_file(&fs, name);
     if (!inode) return -ENOSPC;
@@ -132,7 +146,9 @@ static int fs_read(
     inode_t *inode = find_inode(fs.table, path + 1);
     if (!inode) return -ENOENT;
 
-    return read_file(&fs, inode, (uint8_t *)buf, size, offset);
+    int read = read_file(&fs, inode, (uint8_t *)buf, size, offset);
+
+    return read == -1 ? -EIO : read;
 }
 
 static int fs_write(
@@ -250,13 +266,15 @@ int main(int argc, char *argv[]) {
         return 1;
     }
 
-    char *args[argc + 2]; 
+    char *args[argc + 4]; 
     int i;
     for (i = 0; i < argc - 1; i++) {
         args[i] = argv[i + 1]; // Shift to remove disk.img from FUSE args
     }
     args[i++] = "-o";
     args[i++] = "FileSystemName=TF-FS";
-    
+    args[i++] = "-f";
+    args[i++] = "-s"; // Single thread
+
     return fuse_main(i, args, &ops, NULL);
 }

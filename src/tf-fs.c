@@ -33,7 +33,7 @@ int write_file(fs_t *fs, inode_t *inode, uint8_t data[], size_t size, size_t off
         int new_block = 0;
         if (block == 0) {
             block = alloc_block(fs->bitmap, &fs->sb);
-            if (block == -1) break;
+            if (block == -1) break; // Disk is full
 
             inode->blocks[block_index] = block;
             new_block = 1;
@@ -41,7 +41,7 @@ int write_file(fs_t *fs, inode_t *inode, uint8_t data[], size_t size, size_t off
 
         uint8_t buffer[BLOCK_SIZE] = {0};
         if (!new_block && (block_offset != 0 || remaining < BLOCK_SIZE)) {
-            read_block(fs->disk, block, buffer);
+            if (read_block(fs->disk, block, buffer) <= 0) return -1;
         }
 
         size_t space = BLOCK_SIZE - block_offset;
@@ -85,7 +85,9 @@ int read_file(fs_t *fs, inode_t *inode, uint8_t out[], size_t size, size_t offse
         size_t remaining = size - total_read;
         size_t to_read = remaining < space ? remaining : space;
 
-        read_bytes(fs->disk, block, out + total_read, to_read, block_offset);
+        if (read_bytes(fs->disk, block, out + total_read, to_read, block_offset) <= 0) {
+            return -1;
+        };
 
         total_read += to_read;
         block_index++;
