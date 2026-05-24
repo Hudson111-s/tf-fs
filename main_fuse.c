@@ -266,7 +266,7 @@ int main(int argc, char *argv[]) {
         return 1;
     }
 
-    char *args[argc + 4]; 
+    char *args[1024]; 
     int i;
     for (i = 0; i < argc - 1; i++) {
         args[i] = argv[i + 1]; // Shift to remove disk.img from FUSE args
