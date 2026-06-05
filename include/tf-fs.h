@@ -25,3 +25,6 @@ int read_file(fs_t *fs, inode_t *inode, uint8_t out[], size_t size, size_t offse
 
 /* Deletes file by freeing inode, bitmap, and blocks. */
 int delete_file(fs_t *fs, inode_t *inode);
+
+/* Truncate file based on size. */
+int truncate_file(fs_t *fs, inode_t *inode, size_t size);

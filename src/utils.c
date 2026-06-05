@@ -76,11 +76,11 @@ int read_inode(FILE *disk, inode_t table[]) {
 
 int sync_fs(fs_t *fs) {
     fseek(fs->disk, SUPERBLOCK_START, SEEK_SET);
-    if (fwrite(&fs->sb, sizeof(superblock_t), 1, fs->disk) != 1) return -1;
+    if (fwrite(&fs->sb, sizeof(superblock_t), 1, fs->disk) != 1) return 1;
     fseek(fs->disk, BITMAP_BLOCK_START, SEEK_SET);
-    if (fwrite(fs->bitmap, BITMAP_SIZE, 1, fs->disk) != 1) return -1;
+    if (fwrite(fs->bitmap, BITMAP_SIZE, 1, fs->disk) != 1) return 1;
     fseek(fs->disk, INODE_BLOCK_START, SEEK_SET);
-    if (fwrite(fs->table, sizeof(inode_t), MAX_FILES, fs->disk) != MAX_FILES) return -1;
+    if (fwrite(fs->table, sizeof(inode_t), MAX_FILES, fs->disk) != MAX_FILES) return 1;
     
     fflush(fs->disk);
     return 0;
