@@ -18,10 +18,10 @@ typedef struct fs_t{
 inode_t *create_file(fs_t *fs, const char *name);
 
 /* Write data buffer to file. Will allocate block(s) if needed. */
-int write_file(fs_t *fs, inode_t *inode, uint8_t data[], size_t size, size_t offset);
+size_t write_file(fs_t *fs, inode_t *inode, uint8_t data[], size_t size, size_t offset);
 
 /* Reads file into out buffer. */
-int read_file(fs_t *fs, inode_t *inode, uint8_t out[], size_t size, size_t offset);
+size_t read_file(fs_t *fs, inode_t *inode, uint8_t out[], size_t size, size_t offset);
 
 /* Deletes file by freeing inode, bitmap, and blocks. */
 int delete_file(fs_t *fs, inode_t *inode);

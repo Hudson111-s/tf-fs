@@ -5,6 +5,7 @@
 # tf-fs
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg?style=for-the-badge)](LICENSE)
 
+
 **tf-fs** is a minimal block-based filesystem.
 
 
@@ -22,12 +23,10 @@ To achieve this, **tf-fs**:
 The result is a simple, predictable filesystem that prioritizes space efficiency.
 
 
-
 ## Platform Support
 
 **tf-fs** is currently Windows only and uses WinFsp to mount the filesystem
 to the operating system. Linux and macOS support may be added in the future.
-
 
 
 ## Disk Image

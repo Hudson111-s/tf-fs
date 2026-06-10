@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <string.h>
+#include <errno.h>
 
 #include "tf-fs.h"
 #include "superblock.h"
@@ -16,7 +17,7 @@ inode_t *create_file(fs_t *fs, const char *name) {
     return inode;
 }
 
-int write_file(fs_t *fs, inode_t *inode, uint8_t data[], size_t size, size_t offset) {
+size_t write_file(fs_t *fs, inode_t *inode, uint8_t data[], size_t size, size_t offset) {
     int block_index = offset / BLOCK_SIZE;
     size_t block_offset = offset % BLOCK_SIZE;
 
@@ -26,14 +27,17 @@ int write_file(fs_t *fs, inode_t *inode, uint8_t data[], size_t size, size_t off
     while (remaining > 0) {
         if (block_index >= MAX_BLOCKS_PER_FILE) {
             if (written > 0) break;
-            return -1;
+            return -EFBIG;
         }
         
         int block = inode->blocks[block_index];
         int new_block = 0;
         if (block == 0) {
             block = alloc_block(fs->bitmap, &fs->sb);
-            if (block == -1) break; // Disk is full
+            if (block == -1) {
+                if (written > 0) break;
+                return -ENOSPC; // Disk is full
+            }
 
             inode->blocks[block_index] = block;
             new_block = 1;
@@ -41,7 +45,7 @@ int write_file(fs_t *fs, inode_t *inode, uint8_t data[], size_t size, size_t off
 
         uint8_t buffer[BLOCK_SIZE] = {0};
         if (!new_block && (block_offset != 0 || remaining < BLOCK_SIZE)) {
-            if (read_block(fs->disk, block, buffer) <= 0) return -1;
+            if (read_block(fs->disk, block, buffer) == -1) return -EIO;
         }
 
         size_t space = BLOCK_SIZE - block_offset;
@@ -53,7 +57,11 @@ int write_file(fs_t *fs, inode_t *inode, uint8_t data[], size_t size, size_t off
             memset(buffer + block_offset, 0, to_write);
         }
         
-        write_block(fs->disk, block, buffer);
+        // Allows partial writes.
+        if (write_block(fs->disk, block, buffer) == -1) {
+            if (written > 0) break;
+            return -EIO;
+        }
 
         written += to_write;
         remaining -= to_write;
@@ -64,10 +72,10 @@ int write_file(fs_t *fs, inode_t *inode, uint8_t data[], size_t size, size_t off
     size_t new_end = offset + written;
     if (new_end > inode->size) inode->size = new_end;
     
-    return (int)written;
+    return written;
 }
 
-int read_file(fs_t *fs, inode_t *inode, uint8_t out[], size_t size, size_t offset) {
+size_t read_file(fs_t *fs, inode_t *inode, uint8_t out[], size_t size, size_t offset) {
     if (offset >= inode->size) return 0;
     if (offset + size > inode->size) size = inode->size - offset;
 
@@ -85,9 +93,8 @@ int read_file(fs_t *fs, inode_t *inode, uint8_t out[], size_t size, size_t offse
         size_t remaining = size - total_read;
         size_t to_read = remaining < space ? remaining : space;
 
-        if (read_bytes(fs->disk, block, out + total_read, to_read, block_offset) <= 0) {
-            return -1;
-        };
+        if (read_bytes(fs->disk, block, out + total_read, to_read, block_offset) == -1)
+            return -EIO;
 
         total_read += to_read;
         block_index++;
@@ -104,8 +111,9 @@ int delete_file(fs_t *fs, inode_t *inode) {
         free_block(fs->bitmap, &fs->sb, inode->blocks[i]);
     }
     free_inode(inode);
-    
-    return sync_fs(fs);
+
+    if (sync_fs(fs) == -1) return -EIO;
+    return 0;
 }
 
 int truncate_file(fs_t *fs, inode_t *inode, size_t size) {
@@ -127,7 +135,8 @@ int truncate_file(fs_t *fs, inode_t *inode, size_t size) {
 
     // File gets bigger.
     if (size > old_size) {
-        write_file(fs, inode, NULL, size - old_size, old_size);
+        size_t written = write_file(fs, inode, NULL, size - old_size, old_size);
+        if (written < 0) return (int)written;
     }
 
     sync_fs(fs);

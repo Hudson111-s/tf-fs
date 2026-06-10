@@ -24,7 +24,6 @@ inode_t *create_inode(inode_t table[], const char *name) {
     return NULL;
 }
 
-int free_inode(inode_t *inode) {
+void free_inode(inode_t *inode) {
     memset(inode, 0, sizeof(inode_t));
-    return 0;
 }

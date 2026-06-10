@@ -14,14 +14,14 @@ int read_bytes(FILE *disk, int block_num, uint8_t *buffer, size_t size, size_t o
     if (offset + size > BLOCK_SIZE) return -1;
 
     if (fseek(disk, (block_num * BLOCK_SIZE) + offset, SEEK_SET) != 0) return -1;
-    return fread(buffer, size, 1, disk) == 1;
+    return fread(buffer, size, 1, disk) == 1 ? 0 : -1;
 }
 
 int write_bytes(FILE *disk, int block_num, uint8_t *buffer, size_t size, size_t offset) {
     if (offset + size > BLOCK_SIZE) return -1;
 
     if (fseek(disk, (block_num * BLOCK_SIZE) + offset, SEEK_SET) != 0) return -1;
-    return fwrite(buffer, size, 1, disk) == 1;
+    return fwrite(buffer, size, 1, disk) == 1 ? 0 : -1;
 }
 
 int read_block(FILE *disk, int block_num, uint8_t *buffer) {

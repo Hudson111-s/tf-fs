@@ -47,13 +47,7 @@ static int fs_getattr(const char *path, struct fuse_stat *st) {
     return 0;
 }
 
-static int fs_readdir(
-    const char *path,
-    void *buf,
-    fuse_fill_dir_t filler,
-    fuse_off_t offset,
-    struct fuse_file_info *fi)
-{
+static int fs_readdir(const char *path, void *buf, fuse_fill_dir_t filler, fuse_off_t offset, struct fuse_file_info *fi) {
     (void)offset;
     (void)fi;
 
@@ -95,10 +89,8 @@ static int fs_create(const char *path, fuse_mode_t mode, struct fuse_file_info *
     // Handle file already exists.
     if (inode) {
         if (fi && (fi->flags & O_TRUNC)) {
-            int ret = truncate_file(&fs, inode, 0);
-            if (ret != 0) {
-                return ret; 
-            }
+            int rc = truncate_file(&fs, inode, 0);
+            if (rc != 0) return -EFBIG; 
         }
 
         time_t now = time(NULL);
@@ -134,30 +126,17 @@ static int fs_rename(const char *from, const char *to) {
     return 0;
 }
 
-static int fs_read(
-    const char *path,
-    char *buf,
-    size_t size,
-    fuse_off_t offset,
-    struct fuse_file_info *fi)
-{
+static int fs_read(const char *path, char *buf, size_t size, fuse_off_t offset, struct fuse_file_info *fi) {
     (void)fi;
 
     inode_t *inode = find_inode(fs.table, path + 1);
     if (!inode) return -ENOENT;
 
-    int read = read_file(&fs, inode, (uint8_t *)buf, size, offset);
-
-    return read == -1 ? -EIO : read;
+    size_t read = read_file(&fs, inode, (uint8_t *)buf, size, offset);
+    return (int)read;
 }
 
-static int fs_write(
-    const char *path,
-    const char *buf,
-    size_t size,
-    fuse_off_t offset,
-    struct fuse_file_info *fi)
-{
+static int fs_write( const char *path, const char *buf, size_t size, fuse_off_t offset, struct fuse_file_info *fi) {
     (void)fi;
 
     inode_t *inode = find_inode(fs.table, path + 1);
@@ -171,7 +150,7 @@ static int fs_write(
         sync_fs(&fs);
     }
 
-    return written == -1 ? -EFBIG : written;
+    return (int)written;
 }
 
 static int fs_open(const char *path, struct fuse_file_info *fi) {
@@ -191,7 +170,7 @@ static int fs_unlink(const char *path) {
     inode_t *inode = find_inode(fs.table, path + 1);
     if (!inode) return -ENOENT;
 
-    return delete_file(&fs, inode) ? -EOF : 0;
+    return delete_file(&fs, inode);
 }
 
 static int fs_utimens(const char *path, const struct fuse_timespec tv[2]) {
@@ -269,7 +248,7 @@ int main(int argc, char *argv[]) {
     char *args[1024]; 
     int i;
     for (i = 0; i < argc - 1; i++) {
-        args[i] = argv[i + 1]; // Shift to remove disk.img from FUSE args
+        args[i] = argv[i + 1];
     }
     args[i++] = "-o";
     args[i++] = "FileSystemName=TF-FS";
