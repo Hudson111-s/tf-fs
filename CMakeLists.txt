@@ -17,6 +17,15 @@ add_executable(tf-fs
     src/utils.c
 )
 
+target_compile_options(tf-fs PRIVATE
+    $<$<COMPILE_LANG_AND_ID:C,GNU,Clang,AppleClang>: -Wall -Wextra -Werror > 
+    $<$<COMPILE_LANG_AND_ID:C,MSVC>: /W4 /WX /wd4232 >
+)
+
+target_compile_definitions(tf-fs PRIVATE
+    $<$<C_COMPILER_ID:MSVC>:_CRT_SECURE_NO_WARNINGS>
+)
+
 target_include_directories(tf-fs PRIVATE 
     include 
     disk
@@ -34,7 +43,6 @@ target_link_libraries(tf-fs PRIVATE "${WINFSP_DIR}/lib/winfsp-${ARCH}.lib")
 target_compile_definitions(tf-fs PRIVATE FUSE_USE_VERSION=28)
 
 add_custom_command(TARGET tf-fs POST_BUILD
-    COMMAND ${CMAKE_COMMAND} -E make_directory "$<TARGET_FILE_DIR:tf-fs>"
     COMMAND ${CMAKE_COMMAND} -E copy_if_different
         "${WINFSP_DIR}/bin/winfsp-x64.dll"
         $<TARGET_FILE_DIR:tf-fs>

@@ -1,6 +1,7 @@
 #pragma once
 
 #include <stdio.h>
+#include <stddef.h>
 
 #include "disk.h"
 #include "inode.h"

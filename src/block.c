@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <stdint.h>
+#include <stddef.h>
 
 #include "block.h"
 #include "superblock.h"
@@ -13,14 +14,14 @@ FILE *open_disk(const char *path) {
 int read_bytes(FILE *disk, int block_num, uint8_t *buffer, size_t size, size_t offset) {
     if (offset + size > BLOCK_SIZE) return -1;
 
-    if (fseek(disk, (block_num * BLOCK_SIZE) + offset, SEEK_SET) != 0) return -1;
+    if (fseek(disk, (block_num * BLOCK_SIZE) + (long)offset, SEEK_SET) != 0) return -1;
     return fread(buffer, size, 1, disk) == 1 ? 0 : -1;
 }
 
 int write_bytes(FILE *disk, int block_num, uint8_t *buffer, size_t size, size_t offset) {
     if (offset + size > BLOCK_SIZE) return -1;
 
-    if (fseek(disk, (block_num * BLOCK_SIZE) + offset, SEEK_SET) != 0) return -1;
+    if (fseek(disk, (block_num * BLOCK_SIZE) + (long)offset, SEEK_SET) != 0) return -1;
     return fwrite(buffer, size, 1, disk) == 1 ? 0 : -1;
 }
 

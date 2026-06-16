@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <errno.h>
+#include <stddef.h>
 
 #include "tf-fs.h"
 #include "superblock.h"
@@ -17,8 +18,8 @@ inode_t *create_file(fs_t *fs, const char *name) {
     return inode;
 }
 
-size_t write_file(fs_t *fs, inode_t *inode, uint8_t data[], size_t size, size_t offset) {
-    int block_index = offset / BLOCK_SIZE;
+int write_file(fs_t *fs, inode_t *inode, uint8_t data[], size_t size, size_t offset) {
+    size_t block_index = offset / BLOCK_SIZE;
     size_t block_offset = offset % BLOCK_SIZE;
 
     size_t remaining = size;
@@ -69,17 +70,17 @@ size_t write_file(fs_t *fs, inode_t *inode, uint8_t data[], size_t size, size_t 
         block_index++;
         block_offset = 0;
     }
-    size_t new_end = offset + written;
+    uint32_t new_end = (uint32_t)(offset + written);
     if (new_end > inode->size) inode->size = new_end;
     
-    return written;
+    return (int)written;
 }
 
-size_t read_file(fs_t *fs, inode_t *inode, uint8_t out[], size_t size, size_t offset) {
+int read_file(fs_t *fs, inode_t *inode, uint8_t out[], size_t size, size_t offset) {
     if (offset >= inode->size) return 0;
     if (offset + size > inode->size) size = inode->size - offset;
 
-    int block_index = offset / BLOCK_SIZE;
+    size_t block_index = offset / BLOCK_SIZE;
     size_t block_offset = offset % BLOCK_SIZE;
     size_t total_read = 0;
 
@@ -101,7 +102,7 @@ size_t read_file(fs_t *fs, inode_t *inode, uint8_t out[], size_t size, size_t of
         block_offset = 0;
     }
 
-    return total_read;
+    return (int)total_read;
 }
 
 int delete_file(fs_t *fs, inode_t *inode) {
@@ -121,22 +122,22 @@ int truncate_file(fs_t *fs, inode_t *inode, size_t size) {
 
     // File gets smaller.
     if (size < old_size) {
-        int old_blocks = (old_size + BLOCK_SIZE - 1) / BLOCK_SIZE;
-        int new_blocks = (size + BLOCK_SIZE - 1) / BLOCK_SIZE;
+        size_t old_blocks = (old_size + BLOCK_SIZE - 1) / BLOCK_SIZE;
+        size_t new_blocks = (size + BLOCK_SIZE - 1) / BLOCK_SIZE;
 
-        for (int i = new_blocks; i < old_blocks; i++) {
+        for (size_t i = new_blocks; i < old_blocks; i++) {
             if (inode->blocks[i]) {
                 free_block(fs->bitmap, &fs->sb, inode->blocks[i]);
                 inode->blocks[i] = 0;
             }
         }
-        inode->size = size;
+        inode->size = (uint32_t)size;
     }
 
     // File gets bigger.
     if (size > old_size) {
-        size_t written = write_file(fs, inode, NULL, size - old_size, old_size);
-        if (written < 0) return (int)written;
+        int written = write_file(fs, inode, NULL, size - old_size, old_size);
+        if (written < 0) return written;
     }
 
     sync_fs(fs);

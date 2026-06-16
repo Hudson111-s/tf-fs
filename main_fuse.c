@@ -7,6 +7,8 @@
 #include <string.h>
 #include <errno.h>
 #include <time.h>
+#include <stdint.h>
+#include <stddef.h>
 
 #include "tf-fs.h"
 #include "inode.h"
@@ -57,7 +59,7 @@ static int fs_readdir(const char *path, void *buf, fuse_fill_dir_t filler, fuse_
     filler(buf, ".", NULL, 0);
     filler(buf, "..", NULL, 0);
 
-    for (int i = 0; i < MAX_FILES; i++) {
+    for (uint64_t i = 0; i < MAX_FILES; i++) {
         if (fs.table[i].used) filler(buf, fs.table[i].name, NULL, 0);
     }
 
@@ -132,8 +134,8 @@ static int fs_read(const char *path, char *buf, size_t size, fuse_off_t offset, 
     inode_t *inode = find_inode(fs.table, path + 1);
     if (!inode) return -ENOENT;
 
-    size_t read = read_file(&fs, inode, (uint8_t *)buf, size, offset);
-    return (int)read;
+    int read = read_file(&fs, inode, (uint8_t *)buf, size, offset);
+    return read;
 }
 
 static int fs_write( const char *path, const char *buf, size_t size, fuse_off_t offset, struct fuse_file_info *fi) {
@@ -150,7 +152,7 @@ static int fs_write( const char *path, const char *buf, size_t size, fuse_off_t 
         sync_fs(&fs);
     }
 
-    return (int)written;
+    return written;
 }
 
 static int fs_open(const char *path, struct fuse_file_info *fi) {
@@ -197,7 +199,7 @@ static int fs_statfs(const char *path, struct fuse_statvfs *st) {
     st->f_namemax = MAX_FILE_NAME;
     
     int inodes_free = 0;
-    for (int i = 0; i < MAX_FILES; i++) {
+    for (uint64_t i = 0; i < MAX_FILES; i++) {
         if (!fs.table[i].used) inodes_free++;
     }
     st->f_ffree = inodes_free; 

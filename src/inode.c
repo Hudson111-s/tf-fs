@@ -1,10 +1,11 @@
 #include <string.h>
+#include <stdint.h>
 
 #include "inode.h"
 #include "block.h"
 
 inode_t *find_inode(inode_t table[], const char *name) {
-    for (int i = 0; i < MAX_FILES; i++) {
+    for (uint64_t i = 0; i < MAX_FILES; i++) {
         if (table[i].used && strcmp(table[i].name, name) == 0) {
             return &table[i];
         }
@@ -13,7 +14,7 @@ inode_t *find_inode(inode_t table[], const char *name) {
 }
 
 inode_t *create_inode(inode_t table[], const char *name) {
-    for (int i = 0; i < MAX_FILES; i++) {
+    for (uint64_t i = 0; i < MAX_FILES; i++) {
         if (!table[i].used) {
             memset(&table[i], 0, sizeof(inode_t));
             strncpy(table[i].name, name, MAX_FILE_NAME);
