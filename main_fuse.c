@@ -1,4 +1,5 @@
 #define FUSE_USE_VERSION 28
+#define MAX_ARGS 1024
 
 #include <fuse.h>
 #include <sys/stat.h>
@@ -26,7 +27,7 @@ static int fs_getattr(const char *path, struct fuse_stat *st) {
     st->st_gid = fuse_get_context()->gid;
 
     if (strcmp(path, "/") == 0) {
-        st->st_mode = S_IFDIR | 0755;
+        st->st_mode = S_IFDIR | 0766;
         st->st_nlink = 2;
         return 0;
     }
@@ -43,7 +44,7 @@ static int fs_getattr(const char *path, struct fuse_stat *st) {
     st->st_birthtim.tv_sec = inode->birthtim;
     st->st_birthtim.tv_nsec = 0;
     
-    st->st_mode = S_IFREG | 0666;
+    st->st_mode = S_IFREG | 0766;
     st->st_nlink = 1;
     st->st_size = inode->size;
     return 0;
@@ -247,7 +248,7 @@ int main(int argc, char *argv[]) {
         return 1;
     }
 
-    char *args[1024]; 
+    char *args[MAX_ARGS]; 
     int i;
     for (i = 0; i < argc - 1; i++) {
         args[i] = argv[i + 1];

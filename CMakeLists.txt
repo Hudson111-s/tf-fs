@@ -29,7 +29,6 @@ target_compile_definitions(tf-fs PRIVATE
 target_include_directories(tf-fs PRIVATE 
     include 
     disk
-    "${WINFSP_DIR}/inc"
     "${WINFSP_DIR}/inc/fuse"
 )
 
