@@ -37,6 +37,9 @@ Example:
 fsutil file createnew disk.img 67108864
 ```
 
+> [!NOTE]
+> You must update `DISK_MB` in [`disk.h`](disk/disk.h) to the size of your disk image before building.
+
 ## Build instructions
 
 **tf-fs** uses CMake to build, please follow the following steps to build:
