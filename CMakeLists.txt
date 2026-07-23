@@ -1,5 +1,9 @@
 cmake_minimum_required(VERSION 3.15)
-project(tf-fs C)
+project(tf-fs 
+    VERSION 1.0.0
+    DESCRIPTION "Tiny File, File System"
+    LANGUAGES C
+)
 
 set(CMAKE_C_STANDARD 11)
 set(CMAKE_C_STANDARD_REQUIRED ON)
